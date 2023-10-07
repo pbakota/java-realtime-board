@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: websocket-server
+  devtools:
+    restart:
+      additional-paths:
+        - /resources/static
+
+  data:
+    mongodb:
+      uri: mongodb://root:example@playbox:27017/
+      database: rt-board
+      auto-index-creation: true
+
+server:
+  min-port: 10000
+  max-port: 11000
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+    healthcheck:
+      enabled: true
+  instance:
+    prefer-ip-address: true
+
+# The default user='guest' and the password='guest'
+broker:
+  relay:
+    host: ${BROKER_HOST:playbox}
+
+# Add this to application properties to expose the actuator/info endpoint.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info
+
+# To see what is going on with MongoDB
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          mongodb:
+            core:
+              MongoTemplate: DEBUG
