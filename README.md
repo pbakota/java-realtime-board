@@ -6,7 +6,7 @@ The project demonstrates a real-time collaboration platform where the users are 
 
 ## The architecture
 
-![alt](http://127.0.0.1:8000/figures/figure-1.svg)
+![alt](https://github.com/pbakota/java-realtime-board/blob/main/figures/figure-1.svg)
 
 The architecture consists of three major parts. The part named "gateway" is the main entry point for future users. It serves two purposes, the first is to be the front door for the service including optional authentication and authorization (not implemented in this demo project). But it serves also as a load balancer for the web socket server cluster. The part named "web socket server cluster" is used for clustering web socket servers which are the main backbone for the whole project. The web socket server also serves two purposes. The first is to be a relay for message broker, and the second is to serve web socket requests and RCP calls. The project also contains a "service discovery" service used to discover new instances of the web socket server for the load balancer and allow us to start up and shut down the socket servers freely. The last part of the project is the storage service (MongoDB), which stores all the data from the board as well as the conversations between the users.
 
