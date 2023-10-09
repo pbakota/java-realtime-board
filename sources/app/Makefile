@@ -1,4 +1,4 @@
-OUT_DIR=../websocket-server/src/main/resources/static
+OUT_DIR=public
 .PHONY: build
 all: build
 

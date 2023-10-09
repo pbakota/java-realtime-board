@@ -3,7 +3,8 @@ version: '3.7'
 services:
   rt-eureka:
     restart: unless-stopped
-    image: rt-eureka:dev
+    build:
+      context: ./eureka
     volumes:
       - ./config/eureka/application.yml:/app/application.yml:r
     ports:
@@ -13,7 +14,8 @@ services:
  
   rt-gateway:
     restart: unless-stopped
-    image: rt-gateway:dev
+    build:
+      context: ./gateway
     environment:
       - EUREKA_URI=http://rt-eureka:8761/eureka
     volumes:
@@ -25,7 +27,8 @@ services:
 
   rt-websocket-server:
     restart: unless-stopped
-    image: rt-websocket-server:dev
+    build:
+      context: ./websocket-server
     environment:
       - MIN_PORT=10000
       - MAX_PORT=11000
@@ -35,6 +38,7 @@ services:
       - MONGODB_DATABASE=rt-board
     volumes:
       - ./config/websocket-server/application.yml:/app/application.yml:r
+      - ./config/websocket-server/app.config.js:/app/public/app.config.js:r
     expose:
       - "10000-11000"
     depends_on:

@@ -1680,5 +1680,5 @@ class BoardApp extends Engine {
 }
 
 // src/main.ts
-var $board = new BoardApp(CANVAS_ID, BROKER_URL);
+var $board = new BoardApp(CANVAS_ID, WEBSOCKET_URL);
 $board.run();

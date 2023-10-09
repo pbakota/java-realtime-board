@@ -15,7 +15,7 @@ build-websocket-server:
 	cd websocket-server && docker build --progress=plain --no-cache . --tag=rt-websocket-server:dev
 
 start-stack:
-	docker compose -f stack.yml up --scale rt-websocket-server=4 --remove-orphans -d
+	docker compose -f stack.yml up --build --scale rt-websocket-server=4 --remove-orphans -d
 
 stop-stack:
 	docker compose -f stack.yml down

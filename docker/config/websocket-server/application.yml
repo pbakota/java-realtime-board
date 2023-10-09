@@ -3,7 +3,7 @@ spring:
     name: websocket-server
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://root:example@playbox:27017}
+      uri: ${MONGODB_URI:mongodb://root:example@localhost:27017}
       database: ${MONGODB_DATABASE:rt-board}
       auto-index-creation: true
 
@@ -23,7 +23,7 @@ eureka:
 # The default user='guest' and the password='guest'
 broker:
   relay:
-    host: ${BROKER_HOST:playbox}
+    host: ${BROKER_HOST:localhost}
 
 # Add this to application properties to expose the actuator/info endpoint.
 management:

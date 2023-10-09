@@ -43,9 +43,5 @@ management:
 # To see what is going on with MongoDB
 logging:
   level:
-    org:
-      springframework:
-        data:
-          mongodb:
-            core:
-              MongoTemplate: DEBUG
+    org.springframework.web.servlet.handler.*: DEBUG
+    data.mongodb.core.MongoTemplate: DEBUG
