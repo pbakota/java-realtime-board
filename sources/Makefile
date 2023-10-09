@@ -14,7 +14,7 @@ run-gw:
 	cd gateway && ../mvnw spring-boot:run
 
 run-websocket:
-	cd websocket-server && ../mvnw spring-boot:run -D"spring-boot.run.jvmArguments"="-Dspring.resources.static-locations=$(PWD)/app/public"
+	cd websocket-server && ../mvnw spring-boot:run -D"spring-boot.run.jvmArguments"="-Dspring.web.resources.static-locations=file://$(PWD)/app/public"
 
 build-app:
 	cd app && bun build --target browser --outfile websocket-server/src/main/resources/static/app.js --watch app/main.ts
