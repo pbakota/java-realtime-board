@@ -5,12 +5,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 import rs.lab.board.ws.dto.ApiRequest;
 import rs.lab.board.ws.dto.ApiResponse;
 import rs.lab.board.ws.services.BoardService;
 
 import java.util.Map;
+
+import static rs.lab.board.ws.configuration.AsyncExecutorConfiguration.TASK_EXECUTOR_CONTROLLER;
 
 @Slf4j
 @Controller
@@ -26,6 +29,7 @@ public class WebSocketApiController {
         this.simpMessagingTemplate = simpMessagingTemplate;
     }
 
+    @Async(TASK_EXECUTOR_CONTROLLER)
     @MessageMapping("/api/request")
     public void apiCall(@Header("correlation-id") String correlationId, @Header("reply-to") String replyTo, ApiRequest apiRequest) {
         log.info("Received: {}, correlationId={}, replyTo={}", apiRequest, correlationId, replyTo);

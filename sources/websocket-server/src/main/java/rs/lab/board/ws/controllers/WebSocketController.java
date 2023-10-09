@@ -6,12 +6,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 import rs.lab.board.ws.dto.*;
 import rs.lab.board.ws.services.BoardService;
 import rs.lab.board.ws.utils.ConversionHelper;
 
 import java.util.Random;
+
+import static rs.lab.board.ws.configuration.AsyncExecutorConfiguration.TASK_EXECUTOR_CONTROLLER;
 
 @Slf4j
 @Controller
@@ -30,6 +33,7 @@ public class WebSocketController {
         this.simpMessagingTemplate = simpMessagingTemplate;
     }
 
+    @Async(TASK_EXECUTOR_CONTROLLER)
     @MessageMapping("/incoming/{boardId}")
     public void incoming(@DestinationVariable String boardId, RawMessage message) {
         log.info(String.format("received message: %s", message));
