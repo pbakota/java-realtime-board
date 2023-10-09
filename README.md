@@ -17,11 +17,11 @@ The project supports an "unlimited" number of web socket servers to serve a larg
 
 Implemented features:
 
-* Multi board real-time collaboation canvas that manages basic shapes on board
+* Multi-board real-time collaboration canvas that manages basic shapes on board
 * Simple on-site chat per board
-* RPC API calls as replacement for REST endpoints
+* RPC API calls as a replacement for REST endpoints
 
-The solution assume that you already have installed the required core services and those are:
+The solution assumes that you already have installed the required core services and those are:
 
 * MongoDB
 * RabbitMQ (with STOMP plugin)
@@ -34,30 +34,30 @@ The project uses STOMP over a web socket for communication. Java Spring boot 3 i
 
 The board is implemented with HTML5 canvas.
 
-Accepts following simple commands:
+Accepts the following simple commands:
 
 * **ObjectCreateMessage**
     This message will create a new shape on the board
 * **ObjectMovedMessage**
     This message will set the new position of the item on the board
 * **ObjectRemovedMessage**
-    With this message the board item can be removed
+    With this message, the board item can be removed
 * **UserMessage**
     The participants of the board can send messages.
 
 Also implemented two RCP calls:
 
 * **get-board-items**
-    To retrive board items
+    To retrieve board items
 * **get-board-messages**
-    To retrive latest board messages
+    To retrieve the latest board messages
 
 The board implemented double-buffering to not have any tearing on the screen and to have a much smoother experience.
 The demo project also contains a small HTML page with a basic chat component. The HTML page uses jQuery but that is used only for help with HTML manipulations and it has not been involved in any other procedures.
 
 ## Configuration
 
-There are a couple of configuration files which need update/change before you can run the project. And those are:
+There are a couple of configuration files that need updated/changed before you can run the project. And those are:
 
 The environment variables:
 
@@ -74,7 +74,7 @@ Most probably you can keep MIN_PORT and MAX_PORT unaltered. But you have to chan
 
 ## Build & run
 
-The project used GNU make files to build and package the services. There are a couple of targets that can be used from "source" folder:
+The project used GNU make files to build and package the services. There are a couple of targets that can be used from the "source" folder:
 
 ```text
 make                  - This will build everything
@@ -87,15 +87,15 @@ To test the whole demo project you have to have all the services up and running.
 
 ## Frontend build
 
-The project implements frontend in plain TypeScript using excellent **bun** (https://bun.sh/) all-in-one toolkit for JavaScript and TypeScript.
+The project implements the frontend in plain TypeScript using an excellent **bun** (https://bun.sh/) all-in-one toolkit for JavaScript and TypeScript.
 
-To build the project go to 'app' folder and there again you can find a Makefile
+To build the project go to the 'app' folder and there again you can find a Makefile
 
 There are a couple of targets defined:
 
 ```text
 make build  - To build the app in watch mode
-              (automatically will comipled to JavaScript on save)
+              (automatically will be compiled to JavaScript on save)
 make serve  - To run the HTTP server for testing (PHP)
 ```
 
@@ -115,4 +115,4 @@ To stop the stack
 make stop-stack
 ```
 
-NOTE: Do not forget to update your application.properties file under 'docker' container.
+NOTE: Do not forget to update your application.properties file under the 'docker' container.
