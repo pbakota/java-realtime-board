@@ -6,13 +6,13 @@ export type CommandReturnValue = any | void;
 export abstract class Engine {
 
     private _renderer: Renderer;
-    private _start: number | null;
+    private _start: number | undefined;
     private _input: Input;
 
     constructor(element: string, renderer: Renderer) {
         this._renderer = renderer;
         this._input = new Input(document.getElementById(element) as HTMLElement);
-        this._start = null;
+        this._start = undefined;
     }
 
     protected get displayWidth(): number {
@@ -53,7 +53,7 @@ export abstract class Engine {
     protected loop = (ts: number): void => {
         window.requestAnimationFrame(this.loop);
 
-        if (this._start === null) {
+        if (!this._start) {
             this._start = ts;
         }
         const dt = (ts - this._start) / 1000.0;

@@ -2,10 +2,13 @@ spring:
   application:
     name: websocket-server
   devtools:
+    livereload:
+      enabled: true
     restart:
-      additional-paths:
+      poll-interval: 2s
+      quiet-period: 1s
+    additional-paths:
         - /resources/static
-
   data:
     mongodb:
       uri: mongodb://root:example@playbox:27017/

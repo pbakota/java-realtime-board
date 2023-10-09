@@ -17,5 +17,5 @@ run-websocket:
 	cd websocket-server && ../mvnw spring-boot:run
 
 build-app:
-	cd  && bun build --target browser --outfile websocket-server/src/main/resources/static/app.js --watch app/main.ts
+	cd app && bun build --target browser --outfile websocket-server/src/main/resources/static/app.js --watch app/main.ts
 

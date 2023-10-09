@@ -77,6 +77,8 @@ export class UserMessage extends Message {
     }
 }
 
+/* RPC call - API response */
+
 export class ApiResponse<T> {
     body: T;
 }
@@ -90,4 +92,11 @@ export class BoardItemEntity {
     faceColor: string;
     borderColor: string;
     strokeWidth: number;
+}
+
+export class UserMessageEntity {
+    id: string;
+    boardId: string;
+    user: string;
+    message: string;
 }

@@ -4,7 +4,11 @@ import { Scene } from "./scene";
 import { Input } from './engine';
 import { Vector2d } from './util';
 import { BoardApp } from './app';
-import { ActionMessage, ApiResponse, BoardItemEntity, ObjectCreateMessage, ObjectMovedMessage, ObjectRemovedMessage, UserMessage } from './models';
+import { ActionMessage, ApiResponse, BoardItemEntity, ObjectCreateMessage, ObjectMovedMessage, ObjectRemovedMessage, UserMessage, UserMessageEntity } from './models';
+
+export interface NoParamCallback {
+    (): void;
+}
 
 export class BoardScene implements Scene {
 
@@ -14,7 +18,7 @@ export class BoardScene implements Scene {
     private _selected: Shape | null;
     private _canvasWidth: number;
     private _canvasHeight: number;
-    private _newPosition: Vector2d;
+    private _insertNewPosition: Vector2d;
     private _offset: Vector2d;
     private _removeSelected: boolean;
 
@@ -27,7 +31,7 @@ export class BoardScene implements Scene {
         this._canvasWidth = this._app.renderer.display.width;
         this._canvasHeight = this._app.renderer.display.height;
 
-        this._newPosition = new Vector2d(this._canvasWidth / 2, this._canvasHeight / 2);
+        this._insertNewPosition = new Vector2d(this._canvasWidth / 2, this._canvasHeight / 2);
 
         this._selected = null;
         this._removeSelected = false;
@@ -37,12 +41,12 @@ export class BoardScene implements Scene {
         const mouse = this._input.mousePos();
         if (this._input.isMouseDown()) {
             if (this._selected == null) {
-                this._shapes.forEach(s => {
-                    if (s.isOver(mouse.x, mouse.y)) {
-                        if (this._selected?.id != s.id) {
-                            this._offset = new Vector2d(s.position.x - mouse.x, s.position.y - mouse.y);
-                            this._selected = s;
-                            console.log('Selected ' + s.id);
+                this._shapes.forEach(shape => {
+                    if (shape.isOver(mouse.x, mouse.y)) {
+                        if (this._selected?.id != shape.id) {
+                            this._offset = new Vector2d(shape.position.x - mouse.x, shape.position.y - mouse.y);
+                            this._selected = shape;
+                            console.log(`Selected ${shape.id}`);
                             return;
                         }
                     }
@@ -69,13 +73,40 @@ export class BoardScene implements Scene {
         });
     }
 
-    public command(cmd: string, args: any) {
+    private addShapeToBoard(bi: BoardItemEntity) {
+        let newShape: Shape;
+        switch (bi.type) {
+            case 'CIRCLE': {
+                newShape = new Circle(bi.id, bi.position.x, bi.position.y, bi.size.x, bi.size.y, bi.faceColor, bi.borderColor);
+            } break;
+            case 'RECT': {
+                newShape = new Box(bi.id, bi.position.x, bi.position.y, bi.size.x, bi.size.y, bi.faceColor, bi.borderColor);
+            } break;
+            case 'TRIANGLE': {
+                newShape = new Triangle(bi.id, bi.position.x, bi.position.y, bi.size.x, bi.size.y, bi.faceColor, bi.borderColor);
+            } break;
+            default:
+                throw "Invalid shape";
+        }
+        this._shapes.push(newShape);
+    }
+
+    private addUserMessageToChat(user: string, message: string) {
+        const messageOutput = (document.getElementById('message-output') as HTMLElement).getElementsByTagName('tbody')[0];
+        const newRow = messageOutput.insertRow();
+        const newCol = newRow.insertCell();
+        newRow.style.cssText = 'th-lg';
+        newCol.innerHTML = `<em>${user} say</em>: ${message}`;
+        messageOutput.appendChild(newRow);
+    }
+
+    public async command(cmd: string, args: any) {
 
         if (/^add\-/.test(cmd)) {
-            let shapeType: string | null = null;
-            let position: Vector2d = new Vector2d(this._newPosition.x, this._newPosition.y);
-            let size: Vector2d = new Vector2d(100, 100);
             // add commands
+            let shapeType: string;
+            let position: Vector2d = new Vector2d(this._insertNewPosition.x, this._insertNewPosition.y);
+            let size: Vector2d = new Vector2d(100, 100);
             switch (cmd) {
                 case 'add-circle':
                     shapeType = 'circle';
@@ -94,13 +125,17 @@ export class BoardScene implements Scene {
             const borderColor = 'black';
             const strokeWidth = 3;
 
-            this._app.socket.sendMessage(new ObjectCreateMessage(uuidv4(), this._app.boardName, shapeType as string, position, size,
+            this._app.socket.sendMessage(new ObjectCreateMessage(uuidv4(), this._app.boardName, shapeType, position, size,
                 faceColor, borderColor, strokeWidth));
 
         } else {
+            // all other commands
             switch (cmd) {
                 case 'refresh-board':
-                    this.refreshBoard();
+                    await this.refreshBoard().catch(e => console.error(e));
+                    break;
+                case 'refresh-content':
+                    await this.refreshContent(args[0]).catch(e => console.error(e));
                     break;
                 case 'remove-selected':
                     this._removeSelected = true;
@@ -114,47 +149,42 @@ export class BoardScene implements Scene {
         }
     }
 
-    private addShape(bi: BoardItemEntity) {
-        let newShape: Shape | null = null;
-        switch (bi.type) {
-            case 'CIRCLE':
-                newShape = new Circle(bi.id, bi.position.x, bi.position.y, bi.size.x, bi.size.y, bi.faceColor, bi.borderColor);
-                break;
-            case 'RECT':
-                newShape = new Box(bi.id, bi.position.x, bi.position.y, bi.size.x, bi.size.y, bi.faceColor, bi.borderColor);
-                break;
-            case 'TRIANGLE':
-                newShape = new Triangle(bi.id, bi.position.x, bi.position.y, bi.size.x, bi.size.y, bi.faceColor, bi.borderColor);
-                break;
-            default:
-                throw "Invalid shape";
-        }
-        this._shapes.push(newShape);
-
-    }
-    public refreshBoard(): void {
+    public async refreshBoard(): Promise<void> {
         this._shapes = [];
-        this._app.socket.callMethod<ApiResponse<BoardItemEntity[]>>((response: ApiResponse<BoardItemEntity[]>) => {
-            response.body.forEach(itemEntity => {
-                this.addShape(itemEntity);
-            });
-        }, 'get-board-items', this._app.boardName);
+        const response = await this._app.socket.rpcCall<ApiResponse<BoardItemEntity[]>>('get-board-items', this._app.boardName);
+        response.body.forEach(bi => {
+            this.addShapeToBoard(bi);
+        });
+    }
+
+    public async refreshContent(refreshDoneCallback: NoParamCallback | undefined = undefined): Promise<void> {
+        await this.refreshBoard();
+        const response = await this._app.socket.rpcCall<ApiResponse<UserMessageEntity[]>>('get-board-messages', this._app.boardName);
+        response.body.forEach(messageEntity => {
+            this.addUserMessageToChat(messageEntity.user, messageEntity.message);
+        });
+        // To scroll to the bottom
+        const messageOutput = (document.getElementById('message-output') as HTMLElement).getElementsByTagName('tbody')[0];
+        messageOutput.scrollTop = messageOutput.scrollHeight;
+
+        // the callback when everything has done
+        if (refreshDoneCallback) refreshDoneCallback();
     }
 
     public wsMessage(message: ActionMessage): void {
         switch (message.type) {
             case 'OBJECT_CREATED': {
-                const obj = message as ObjectCreateMessage;
-                let newShape: Shape | null = null;
-                switch (obj.itemType.toUpperCase()) {
+                const msg = message as ObjectCreateMessage;
+                let newShape: Shape;
+                switch (msg.itemType.toUpperCase()) {
                     case 'CIRCLE':
-                        newShape = new Circle(obj.id, obj.position.x, obj.position.y, obj.size.x, obj.size.y, obj.faceColor, obj.borderColor);
+                        newShape = new Circle(msg.id, msg.position.x, msg.position.y, msg.size.x, msg.size.y, msg.faceColor, msg.borderColor);
                         break;
                     case 'RECT':
-                        newShape = new Box(obj.id, obj.position.x, obj.position.y, obj.size.x, obj.size.y, obj.faceColor, obj.borderColor);
+                        newShape = new Box(msg.id, msg.position.x, msg.position.y, msg.size.x, msg.size.y, msg.faceColor, msg.borderColor);
                         break;
                     case 'TRIANGLE':
-                        newShape = new Triangle(obj.id, obj.position.x, obj.position.y, obj.size.x, obj.size.y, obj.faceColor, obj.borderColor);
+                        newShape = new Triangle(msg.id, msg.position.x, msg.position.y, msg.size.x, msg.size.y, msg.faceColor, msg.borderColor);
                         break;
                     default:
                         throw "Invalid shape";
@@ -162,8 +192,8 @@ export class BoardScene implements Scene {
                 this._shapes.push(newShape);
             } break;
             case 'OBJECT_REMOVED': {
-                const obj = message as ObjectRemovedMessage;
-                this._shapes = this._shapes.filter(s => s.id != obj.id);
+                const msg = message as ObjectRemovedMessage;
+                this._shapes = this._shapes.filter(s => s.id != msg.id);
             } break;
             case 'OBJECT_MOVED': {
                 const obj = message as ObjectMovedMessage;
@@ -173,15 +203,10 @@ export class BoardScene implements Scene {
                 }
             } break;
             case 'USER_MESSAGE': {
-                const obj = message as UserMessage;
-                const messageOutput = (document.getElementById('message-output') as HTMLElement).getElementsByTagName('tbody')[0];
-                const newRow = messageOutput.insertRow();
-                const newCol = newRow.insertCell();
-                newRow.style.cssText = 'th-lg';
-                newCol.innerHTML = `<em>${obj.user} say</em>: ${obj.message}`;
-                messageOutput.appendChild(newRow);
-
+                const msg = message as UserMessage;
+                this.addUserMessageToChat(msg.user, msg.message);
                 // To scroll to the bottom
+                const messageOutput = (document.getElementById('message-output') as HTMLElement).getElementsByTagName('tbody')[0];
                 messageOutput.scrollTop = messageOutput.scrollHeight;
             } break;
             default:

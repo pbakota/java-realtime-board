@@ -7,26 +7,33 @@ export class BoardApp extends Engine {
     private _socket: BoardSocket;
     private _scene: BoardScene;
 
-    public boardName: string;
-    public userName: string;
+    private _boardName: string;
+    private _userName: string;
 
     constructor(canvasId: string, brokerUrl: string) {
         super(canvasId, new Renderer(canvasId));
 
-        this._socket = new BoardSocket(brokerUrl, this.wsMessage);
-        this._socket.connect();
-
-        this.boardName = 'default';
         this._scene = new BoardScene(this);
+        this._socket = new BoardSocket(brokerUrl, this.wsMessage);
     }
 
     public get socket(): BoardSocket {
         return this._socket;
     }
 
-    public setup(boardName: string, username: string): void {
-        this.boardName = boardName;
-        this.userName = username;
+    public get boardName(): string {
+        return this._boardName;
+    }
+
+    public get userName(): string {
+        return this._userName;
+    }
+
+    public connect(boardName: string, username: string): Promise<void> {
+        this._boardName = boardName;
+        this._userName = username;
+
+        return this._socket.connect(this._boardName);
     }
 
     public update(dt: number): void {
@@ -39,12 +46,12 @@ export class BoardApp extends Engine {
         this._scene.draw(ctx);
     }
 
-    public command(cmd: string, ...args: any): CommandReturnValue {
+    public command(cmd: string, ...args: any): Promise<CommandReturnValue> {
         console.log(`Executing cmd: ${cmd}, args: ${args}`);
         return this._scene.command(cmd, args);
     }
 
-    // define this as property
+    // To receive messages via websocket and forward them to actual scene
     wsMessage = (message: any): void  => {
         this._scene.wsMessage(message);
     }

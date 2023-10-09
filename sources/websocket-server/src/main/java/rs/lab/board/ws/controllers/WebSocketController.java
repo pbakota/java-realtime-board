@@ -3,14 +3,13 @@ package rs.lab.board.ws.controllers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 import rs.lab.board.ws.dto.*;
 import rs.lab.board.ws.services.BoardService;
-import rs.lab.board.ws.utils.FormatHelper;
+import rs.lab.board.ws.utils.ConversionHelper;
 
 import java.util.Random;
 
@@ -31,11 +30,10 @@ public class WebSocketController {
         this.simpMessagingTemplate = simpMessagingTemplate;
     }
 
-    @MessageMapping("/incoming")
-    @SendTo("/topic/outgoing")
-    public String incoming(RawMessage message) {
+    @MessageMapping("/incoming/{boardId}")
+    public void incoming(@DestinationVariable String boardId, RawMessage message) {
         log.info(String.format("received message: %s", message));
-        var obj = FormatHelper.jsonToObject(message.getMessage());
+        var obj = ConversionHelper.jsonToObject(message.getMessage());
         if(obj instanceof CreateBoardItemMessage) {
             createItem((CreateBoardItemMessage) obj);
         } else if(obj instanceof MoveBoardItemMessage) {
@@ -45,7 +43,7 @@ public class WebSocketController {
         } else if(obj instanceof UserMessage) {
             userMessage((UserMessage) obj);
         }
-        return message.getMessage();
+        simpMessagingTemplate.convertAndSend(String.format("/topic/outgoing.%s", boardId), message.getMessage());
     }
 
     private void createItem(CreateBoardItemMessage message) {
@@ -81,7 +79,6 @@ public class WebSocketController {
     }
 
     private void userMessage(UserMessage message) {
-        log.info("User message: {}", message.getMessage());
-        // TODO: Store user messages into db
+        boardService.storeUserMessage(message.getBoardName(), message.getUser(), message.getMessage());
     }
 }
