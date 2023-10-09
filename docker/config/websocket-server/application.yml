@@ -1,23 +1,15 @@
 spring:
   application:
     name: websocket-server
-  devtools:
-    livereload:
-      enabled: true
-    restart:
-      poll-interval: 2s
-      quiet-period: 1s
-    additional-paths:
-        - /resources/static
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://root:example@playbox:27017/}
+      uri: ${MONGODB_URI:mongodb://root:example@playbox:27017}
       database: ${MONGODB_DATABASE:rt-board}
       auto-index-creation: true
 
 server:
-  min-port: ${MIN_PORT:10000}
-  max-port: ${MAX_PORT:11000}
+  min-port: 10000
+  max-port: 11000
 
 eureka:
   client:
@@ -49,3 +41,4 @@ logging:
           mongodb:
             core:
               MongoTemplate: DEBUG
+

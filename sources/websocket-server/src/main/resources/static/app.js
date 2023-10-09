@@ -273,12 +273,12 @@ class BoardScene {
     const mouse = this._input.mousePos();
     if (this._input.isMouseDown()) {
       if (this._selected == null) {
-        this._shapes.forEach((s) => {
-          if (s.isOver(mouse.x, mouse.y)) {
-            if (this._selected?.id != s.id) {
-              this._offset = new Vector2d(s.position.x - mouse.x, s.position.y - mouse.y);
-              this._selected = s;
-              console.log(`Selected ${s.id}`);
+        this._shapes.forEach((shape) => {
+          if (shape.isOver(mouse.x, mouse.y)) {
+            if (this._selected?.id != shape.id) {
+              this._offset = new Vector2d(shape.position.x - mouse.x, shape.position.y - mouse.y);
+              this._selected = shape;
+              console.log(`Selected ${shape.id}`);
               return;
             }
           }
@@ -301,6 +301,37 @@ class BoardScene {
     this._shapes.forEach((s) => {
       s.draw(ctx);
     });
+  }
+  addShapeToBoard(bi) {
+    let newShape;
+    switch (bi.type) {
+      case "CIRCLE":
+        {
+          newShape = new Circle(bi.id, bi.position.x, bi.position.y, bi.size.x, bi.size.y, bi.faceColor, bi.borderColor);
+        }
+        break;
+      case "RECT":
+        {
+          newShape = new Box(bi.id, bi.position.x, bi.position.y, bi.size.x, bi.size.y, bi.faceColor, bi.borderColor);
+        }
+        break;
+      case "TRIANGLE":
+        {
+          newShape = new Triangle(bi.id, bi.position.x, bi.position.y, bi.size.x, bi.size.y, bi.faceColor, bi.borderColor);
+        }
+        break;
+      default:
+        throw "Invalid shape";
+    }
+    this._shapes.push(newShape);
+  }
+  addUserMessageToChat(user, message) {
+    const messageOutput = document.getElementById("message-output").getElementsByTagName("tbody")[0];
+    const newRow = messageOutput.insertRow();
+    const newCol = newRow.insertCell();
+    newRow.style.cssText = "th-lg";
+    newCol.innerHTML = `<em>${user} say</em>: ${message}`;
+    messageOutput.appendChild(newRow);
   }
   async command(cmd, args) {
     if (/^add\-/.test(cmd)) {
@@ -343,39 +374,16 @@ class BoardScene {
       }
     }
   }
-  addShape(bi) {
-    let newShape;
-    switch (bi.type) {
-      case "CIRCLE":
-        {
-          newShape = new Circle(bi.id, bi.position.x, bi.position.y, bi.size.x, bi.size.y, bi.faceColor, bi.borderColor);
-        }
-        break;
-      case "RECT":
-        {
-          newShape = new Box(bi.id, bi.position.x, bi.position.y, bi.size.x, bi.size.y, bi.faceColor, bi.borderColor);
-        }
-        break;
-      case "TRIANGLE":
-        {
-          newShape = new Triangle(bi.id, bi.position.x, bi.position.y, bi.size.x, bi.size.y, bi.faceColor, bi.borderColor);
-        }
-        break;
-      default:
-        throw "Invalid shape";
-    }
-    this._shapes.push(newShape);
-  }
   async refreshBoard() {
     this._shapes = [];
-    const response = await this._app.socket.callMethod("get-board-items", this._app.boardName);
+    const response = await this._app.socket.rpcCall("get-board-items", this._app.boardName);
     response.body.forEach((bi) => {
-      this.addShape(bi);
+      this.addShapeToBoard(bi);
     });
   }
   async refreshContent(refreshDoneCallback = undefined) {
     await this.refreshBoard();
-    const response = await this._app.socket.callMethod("get-board-messages", this._app.boardName);
+    const response = await this._app.socket.rpcCall("get-board-messages", this._app.boardName);
     response.body.forEach((messageEntity) => {
       this.addUserMessageToChat(messageEntity.user, messageEntity.message);
     });
@@ -384,29 +392,21 @@ class BoardScene {
     if (refreshDoneCallback)
       refreshDoneCallback();
   }
-  addUserMessageToChat(user, message) {
-    const messageOutput = document.getElementById("message-output").getElementsByTagName("tbody")[0];
-    const newRow = messageOutput.insertRow();
-    const newCol = newRow.insertCell();
-    newRow.style.cssText = "th-lg";
-    newCol.innerHTML = `<em>${user} say</em>: ${message}`;
-    messageOutput.appendChild(newRow);
-  }
   wsMessage(message) {
     switch (message.type) {
       case "OBJECT_CREATED":
         {
-          const obj = message;
-          let newShape = null;
-          switch (obj.itemType.toUpperCase()) {
+          const msg = message;
+          let newShape;
+          switch (msg.itemType.toUpperCase()) {
             case "CIRCLE":
-              newShape = new Circle(obj.id, obj.position.x, obj.position.y, obj.size.x, obj.size.y, obj.faceColor, obj.borderColor);
+              newShape = new Circle(msg.id, msg.position.x, msg.position.y, msg.size.x, msg.size.y, msg.faceColor, msg.borderColor);
               break;
             case "RECT":
-              newShape = new Box(obj.id, obj.position.x, obj.position.y, obj.size.x, obj.size.y, obj.faceColor, obj.borderColor);
+              newShape = new Box(msg.id, msg.position.x, msg.position.y, msg.size.x, msg.size.y, msg.faceColor, msg.borderColor);
               break;
             case "TRIANGLE":
-              newShape = new Triangle(obj.id, obj.position.x, obj.position.y, obj.size.x, obj.size.y, obj.faceColor, obj.borderColor);
+              newShape = new Triangle(msg.id, msg.position.x, msg.position.y, msg.size.x, msg.size.y, msg.faceColor, msg.borderColor);
               break;
             default:
               throw "Invalid shape";
@@ -416,8 +416,8 @@ class BoardScene {
         break;
       case "OBJECT_REMOVED":
         {
-          const obj = message;
-          this._shapes = this._shapes.filter((s) => s.id != obj.id);
+          const msg = message;
+          this._shapes = this._shapes.filter((s) => s.id != msg.id);
         }
         break;
       case "OBJECT_MOVED":
@@ -431,8 +431,8 @@ class BoardScene {
         break;
       case "USER_MESSAGE":
         {
-          const obj = message;
-          this.addUserMessageToChat(obj.user, obj.message);
+          const msg = message;
+          this.addUserMessageToChat(msg.user, msg.message);
           const messageOutput = document.getElementById("message-output").getElementsByTagName("tbody")[0];
           messageOutput.scrollTop = messageOutput.scrollHeight;
         }
@@ -452,7 +452,7 @@ class Engine {
   constructor(element, renderer) {
     this._renderer = renderer;
     this._input = new Input(document.getElementById(element));
-    this._start = null;
+    this._start = undefined;
   }
   get displayWidth() {
     return this._renderer.display.width;
@@ -478,7 +478,7 @@ class Engine {
   }
   loop = (ts) => {
     window.requestAnimationFrame(this.loop);
-    if (this._start === null) {
+    if (!this._start) {
       this._start = ts;
     }
     const dt = (ts - this._start) / 1000;
@@ -1556,18 +1556,18 @@ class Client {
 class RpcCall {
   timeout;
   correlation_id;
-  resolv;
-  constructor(correlation_id, timeout, resolv) {
+  onreply;
+  constructor(correlation_id, timeout, onreply) {
     this.correlation_id = correlation_id;
     this.timeout = timeout;
-    this.resolv = resolv;
+    this.onreply = onreply;
   }
 }
 
 class BoardSocket {
   _stompClient;
   _wsCallback;
-  _rpcQueueName;
+  _rpcReplyQueueName;
   _rpcTimeout;
   _rpcCalls;
   boardName;
@@ -1579,7 +1579,7 @@ class BoardSocket {
       brokerURL: brokerUrl,
       reconnectDelay: 1000
     });
-    this._rpcQueueName = v4_default();
+    this._rpcReplyQueueName = `/queue/replies-${v4_default()}`;
   }
   connect(boardName) {
     return new Promise((resolve, reject) => {
@@ -1589,7 +1589,7 @@ class BoardSocket {
         this._stompClient.subscribe(`/topic/outgoing.x-${this.boardName}`, (message) => {
           this._wsCallback(JSON.parse(message.body));
         });
-        this._stompClient.subscribe(`/queue/replies-${this._rpcQueueName}`, this.apiReply, {
+        this._stompClient.subscribe(this._rpcReplyQueueName, this.apiReply, {
           "auto-delete": "true",
           durable: "false",
           exclusive: "false"
@@ -1612,9 +1612,9 @@ class BoardSocket {
     });
   }
   apiReply = (message) => {
-    this._rpcCalls.find((c) => message.headers["correlation-id"] === c.correlation_id)?.resolv(message);
+    this._rpcCalls.find((c) => message.headers["correlation-id"] === c.correlation_id)?.onreply(message);
   };
-  callMethod(methodName, ...args) {
+  rpcCall(methodName, ...args) {
     return new Promise((resolve, reject) => {
       const correlation_id = v4_default();
       const timeoutId = window.setTimeout(() => {
@@ -1630,7 +1630,7 @@ class BoardSocket {
         destination: "/app/api/request",
         body: JSON.stringify({ method: methodName, args }),
         headers: {
-          "reply-to": `/queue/replies-${this._rpcQueueName}`,
+          "reply-to": this._rpcReplyQueueName,
           "correlation-id": correlation_id
         }
       });
@@ -1670,7 +1670,7 @@ class BoardApp extends Engine {
     ctx.clearRect(0, 0, this.displayWidth, this.displayHeight);
     this._scene.draw(ctx);
   }
-  async command(cmd, ...args) {
+  command(cmd, ...args) {
     console.log(`Executing cmd: ${cmd}, args: ${args}`);
     return this._scene.command(cmd, args);
   }
@@ -1680,7 +1680,5 @@ class BoardApp extends Engine {
 }
 
 // src/main.ts
-var CANVAS_ID = "canvas";
-var BROKER_URL = "ws://192.168.7.3:8081/websocket";
 var $board = new BoardApp(CANVAS_ID, BROKER_URL);
 $board.run();
