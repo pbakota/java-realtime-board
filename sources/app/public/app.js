@@ -485,7 +485,6 @@ class Engine {
     this._start = ts;
     this.update(dt);
     this.draw(this._renderer.context);
-    this._renderer.flip();
   };
   run() {
     window.requestAnimationFrame(this.loop);
@@ -608,28 +607,15 @@ var InputKey = {
 class Renderer {
   _canvas;
   _ctx;
-  _bcanvas;
-  _bctx;
   constructor(canvasId) {
     this._canvas = document.getElementById(canvasId);
     this._ctx = this._canvas.getContext("2d");
-    this._bcanvas = this._canvas.cloneNode(true);
-    this._bctx = this._bcanvas.getContext("2d");
   }
   get display() {
     return this._canvas;
   }
   get context() {
     return this._ctx;
-  }
-  get backbuffer() {
-    return this._bcanvas;
-  }
-  get bctx() {
-    return this._bctx;
-  }
-  flip() {
-    this._ctx.drawImage(this._bcanvas, 0, 0);
   }
 }
 
@@ -1667,7 +1653,9 @@ class BoardApp extends Engine {
     this._scene.update(dt);
   }
   draw(ctx) {
-    ctx.clearRect(0, 0, this.displayWidth, this.displayHeight);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     this._scene.draw(ctx);
   }
   command(cmd, ...args) {

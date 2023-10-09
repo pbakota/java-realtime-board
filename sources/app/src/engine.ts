@@ -61,8 +61,6 @@ export abstract class Engine {
 
         this.update(dt);
         this.draw(this._renderer.context);
-
-        this._renderer.flip();
     }
 
     public run(): void {

@@ -484,7 +484,7 @@ class Engine {
     const dt = (ts - this._start) / 1000;
     this._start = ts;
     this.update(dt);
-    this.draw(this._renderer.context);
+    this.draw(this._renderer.bcontext);
     this._renderer.flip();
   };
   run() {
@@ -625,7 +625,7 @@ class Renderer {
   get backbuffer() {
     return this._bcanvas;
   }
-  get bctx() {
+  get bcontext() {
     return this._bctx;
   }
   flip() {

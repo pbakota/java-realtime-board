@@ -42,7 +42,9 @@ export class BoardApp extends Engine {
     }
 
     public draw(ctx: CanvasRenderingContext2D): void {
-        ctx.clearRect(0, 0, this.displayWidth, this.displayHeight);
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         this._scene.draw(ctx);
     }
 
