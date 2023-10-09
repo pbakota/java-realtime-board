@@ -166,12 +166,9 @@
                 $board.storeLocal({ boardName: boardName, nickName: nickName });
 
                 $('#message-label').html(`Message (${nickName}):`);
-                $board.connect(boardName, nickName).then(() => {
-                    return $board.command('refresh-content');
-                })
-                .then(() => {
-                    return $board.command('send-message', '[system]', `${nickName} entered board.`);
-                });
+                $board.connect(boardName, nickName)
+                    .then(() => $board.command('refresh-content'))
+                    .then(() => $board.command('send-message', '[system]', `${nickName} entered board.`));
             });
         });
 
