@@ -115,4 +115,4 @@ To stop the stack
 make stop-stack
 ```
 
-NOTE: Do not forget to update your application.properties file under the 'docker' container.
+NOTE: Do not forget to update your application.properties and app.config.js files under the 'docker' container.
