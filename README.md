@@ -70,7 +70,8 @@ MAX_PORT            - The end of the port range for websocket-server (eg: 11000)
 BROKER_HOST         - The hostname of the message broker (eg: localhost)
 ```
 
-Most probably you can keep MIN_PORT and MAX_PORT unaltered. But you have to change the values for other environment variables.
+Most probably you can keep MIN_PORT and MAX_PORT unaltered. But you have to change the values for other environment variables. Most of the configurations are in
+the service's corresponding application.yml files, and there is also in the "app/public" folder a configuration file for the frontend.
 
 ## Build & run
 
@@ -115,4 +116,4 @@ To stop the stack
 make stop-stack
 ```
 
-NOTE: Do not forget to update your application.properties and app.config.js files under the 'docker' container.
+NOTE: Do not forget to update your application.yml and app.config.js files in the 'docker' container folder.
